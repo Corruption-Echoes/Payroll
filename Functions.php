@@ -1,3 +1,5 @@
+<html>
+<body>
 <?php
 
 
@@ -26,7 +28,7 @@ function printmenu($conn){
 			<form action='home.php' method='post'>Payroll Related Tasks:
 			<input type='text' name='Mode' value='1' hidden>
 			<br><input type='radio' name='Task' value='1'>View Payroll
-			<br><input type='radio' name='Task' value='2'>Register hours
+			<br><input type='radio' name='Task' value='2'>Register hours #of hours:<input type='number' name='hours'> Day:<input type='date' name='day'>
 			<br><input type='radio' name='Task' value='3'>Modify Previous entries
 			<br>Employee:";
 	printAgentsList($conn);
@@ -46,14 +48,25 @@ function printmenu($conn){
 	printAgentsList($conn);
 	echo"<br><input type='submit' value='Submit'>
 			</form>";
+	//Begin payroll printing
+	$week=getcurrentpayrollweek($conn);
+	
+	echo "Current Payroll Information!<table>";
+	printpayrollbyweek($week,$conn);
+			
+	echo "</table>";
 			
 }
-function printAgentsList($conn){
+function getAgentList($conn){
 	$sql="SELECT Fname,Lname,IDKey FROM workers";
 	$result = $conn->query($sql);
+	return $result;
+}
+function printAgentsList($conn){
+	$list=getAgentList($conn);
 	echo "<select name='Agent'>";
-	if ($result->num_rows > 0) {
-		while($row = $result->fetch_assoc()) {
+	if ($list->num_rows > 0) {
+		while($row = $list->fetch_assoc()) {
 			$ID=$row["IDKey"];
 			$FN=$row["Fname"];
 			$LN=$row["Lname"];
@@ -77,5 +90,118 @@ function printWeeksList($conn){
 	}
 	echo "</select>";
 }
+function printpayrollbyweek($week,$conn){
+	echo "<tr><th>Agent</th><th>Gross</th><th>CPP</th><th>EI</th><th>Prov</th><th>Fed</th><th>Total Deduct</th><th>Net Pay</th></tr>";
+	$list=getAgentList($conn);
+	if ($list->num_rows > 0) {
+		while($row = $list->fetch_assoc()) {
+			$agent=$row["IDKey"];
+			$FN=$row["Fname"];
+			$LN=$row["Lname"];
+				
+			echo "<tr><td>$FN $LN</td>";
+			calculateDeductions($week,$agent,$conn);
+		}
+	}
+	
+}
+function calculateDeductions($week,$agent,$conn){
+	$weekstart=getweekearned($agent,$week,$conn);
+	$cpp=calculateCPP($weekstart);
+	$EI=calculateEI($weekstart);
+	$prov=calculatedprov($weekstart);
+	$fed=calculatefed($weekstart);
+	$weekfinish=$weekstart-$cpp-$EI-$prov-$fed;
+	$deductionstotal=$cpp+$EI+$prov+$fed;
+	echo "<td>$weekstart</td><td>$cpp</td><td>$EI</td><td>$prov</td><td>$fed</td><td>$deductionstotal</td><td><b>$weekfinish<b></td></tr>";
+	
+}
+function calculateCPP($weekstart){
+	//Calculate the CPP pay period exemption
+	$exemptyear=3500;
+	$exemptpay=3500/52;
+	//Subtract the pay period exemption from the total
+	$minusexempt=$weekstart-$exemptpay;
+	//Calculate 4.95% of the remaining as what should be contributed to CPP
+	$cpp=$minusexempt*0.0495;
+	//Return the calculated amount
+	return $cpp;
+}
+function calculateEI($weekstart){
+	$EI=$weekstart*0.0188;
+	return $EI;
+	
+}
+function calculateprov($weekstart){
+	$prov=$weekstart*0.0505;
+	return $prov;
+}
+function calculatefed($weekstart){
+	$fed=$weekstart*0.15;
+	return $fed;
+}
+function getweekearned($agent,$week,$conn){
+	$monday=getweekstart($conn,$week);
+	//Prepare statements to get the total hours worked in a week, and the crrent payrate of the employee
+	$sql="SELECT SUM(hours) AS hours FROM hourlog WHERE WeekID='$week' AND AgentID='$agent'";
+	$sql2="SELECT payrate FROM states WHERE AgentID='$agent' AND Date<'$monday' ORDER BY IDKey DESC";
+	//Request data from the server
+	$result = $conn->query($sql);
+	$row = $result->fetch_assoc();
+	$result2 = $conn->query($sql2);
+	$row2 = $result2->fetch_assoc();
+	
+	//Calculate the totals
+	$total=$row["hours"]*$row2["payrate"];
+	
+	return $total;
+}
+function getweekstart($conn,$week){
+	$sql="SELECT * FROM weeks WHERE IDKey='$week'";
+	$result = $conn->query($sql);
+	$row = $result->fetch_assoc();
+	return $row["Sdate"];
+}
+function getcurrentpayrollweek($conn){
+	$today=getcurrentdate();
+	$date = new DateTime($today);
+	$date->modify('-1 week');
+	$lastweek=$date->format('Y-m-d');
+	
+	$sql="SELECT * FROM weeks WHERE Sdate<=$lastweek ORDER BY IDKey DESC LIMIT 1";
+	$result = $conn->query($sql);
+	if ($result->num_rows > 0) {
+		$row = $result->fetch_assoc();
+		return $row["WeekID"];
+	}
+	return 0;
+}
+function getcurrentdate(){
+	$today = date("Y-m-d");
+	
+	return $today;
+}
+function addemployee(){
+	
+}
+function getweekfromday($day,$conn){
+	$sql="SELECT * FROM weeks WHERE Sdate<='$day' AND Edate>='$day'";
+	$result = $conn->query($sql);
+	$row = $result->fetch_assoc();
+	return $row["IDKey"];
+}
+
+
+
+
+
+
+
+
+
+
+
 
 ?>
+</body>
+</html>
