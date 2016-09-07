@@ -1,5 +1,6 @@
 <head>
 <title>H&E Payroll</title>
+<link rel="stylesheet" type="text/css" href="main.css">
 </head>
 
 <body>
@@ -10,8 +11,9 @@ $conn=connect();
 if( isset($_POST['Mode']) ){
 	$Mode=$_POST['Mode'];
 	if($Mode==1){//Payroll tasks
+	$Task=$_POST["Task"];
 		if($Task==1){//View a payroll for a specified week
-				$week=$_POST["week"];
+				$week=$_POST["Week"];
 				echo "Here is the payroll for that week #$week.<table>";
 				printpayrollbyweek($week,$conn);
 				echo "</table>";
@@ -19,9 +21,10 @@ if( isset($_POST['Mode']) ){
 			$hours=$_POST["hours"];
 			$day=$_POST["day"];
 			$week=getweekfromday($day,$conn);
-			
-			$sql="INSERT INTO hourlog (WeekID,AgentID,Hours,Day) VALUES ($week,$agent,$hours,$day)";
+			$agent=$_POST["Agent"];
+			$sql="INSERT INTO hourlog (WeekID,AgentID,Hours,Day) VALUES ('$week','$agent','$hours','$day')";
 			$conn->query($sql);
+			echo $sql;
 			echo "Hours have been registered in payroll databanks as per request.";
 		}else if($Task==3){//Modify existing entries
 			

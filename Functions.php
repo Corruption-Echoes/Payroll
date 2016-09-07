@@ -4,7 +4,7 @@
 
 
 function connect(){
-	$conn = new mysqli("localhost", "web", "L69992772");
+	$conn = new mysqli("localhost", "web", "L69992772","main");
 	return $conn;
 }
 function printmenu($conn){
@@ -76,16 +76,16 @@ function printAgentsList($conn){
 	echo "</select>";
 }
 function printWeeksList($conn){
-	$sql="SELECT Edage,Sdate,IDKey FROM weeks";
+	$sql="SELECT Edate,Sdate,IDKey FROM weeks";
 	$result = $conn->query($sql);
 	echo "<select name='Week'>";
 	echo "<option value='0'>This Week</option>";
 	if ($result->num_rows > 0) {
 		while($row = $result->fetch_assoc()) {
 			$ID=$row["IDKey"];
-			$SDD=$row["Sdate"];
+			$SD=$row["Sdate"];
 			$ED=$row["Edate"];
-			echo "<option value='$ID'>$SD-$ED</option>";
+			echo "<option value='$ID'>$SD - $ED</option>";
 		}
 	}
 	echo "</select>";
@@ -106,13 +106,13 @@ function printpayrollbyweek($week,$conn){
 	
 }
 function calculateDeductions($week,$agent,$conn){
-	$weekstart=getweekearned($agent,$week,$conn);
-	$cpp=calculateCPP($weekstart);
-	$EI=calculateEI($weekstart);
-	$prov=calculatedprov($weekstart);
-	$fed=calculatefed($weekstart);
-	$weekfinish=$weekstart-$cpp-$EI-$prov-$fed;
-	$deductionstotal=$cpp+$EI+$prov+$fed;
+	$weekstart=round(getweekearned($agent,$week,$conn),2);
+	$cpp=round(calculateCPP($weekstart),2);
+	$EI=round(calculateEI($weekstart),2);
+	$prov=round(calculateprov($weekstart),2);
+	$fed=round(calculatefed($weekstart),2);
+	$weekfinish=round($weekstart-$cpp-$EI-$prov-$fed,2);
+	$deductionstotal=round($cpp+$EI+$prov+$fed,2);
 	echo "<td>$weekstart</td><td>$cpp</td><td>$EI</td><td>$prov</td><td>$fed</td><td>$deductionstotal</td><td><b>$weekfinish<b></td></tr>";
 	
 }
@@ -125,20 +125,32 @@ function calculateCPP($weekstart){
 	//Calculate 4.95% of the remaining as what should be contributed to CPP
 	$cpp=$minusexempt*0.0495;
 	//Return the calculated amount
+	if($cpp<0){
+		return 0;
+	}
 	return $cpp;
 }
 function calculateEI($weekstart){
 	$EI=$weekstart*0.0188;
+	
 	return $EI;
 	
 }
 function calculateprov($weekstart){
-	$prov=$weekstart*0.0505;
-	return $prov;
+	if($weekstart>0){
+		$weekstart=$weekstart-319;
+		$prov=$weekstart*0.0505;
+		return $prov;
+	}
+	return 0;
 }
 function calculatefed($weekstart){
-	$fed=$weekstart*0.15;
-	return $fed;
+	if($weekstart>0){
+		$weekstart=$weekstart-279;
+		$fed=$weekstart*0.15;
+		return $fed;
+	}
+	return 0;
 }
 function getweekearned($agent,$week,$conn){
 	$monday=getweekstart($conn,$week);
@@ -152,7 +164,7 @@ function getweekearned($agent,$week,$conn){
 	$row2 = $result2->fetch_assoc();
 	
 	//Calculate the totals
-	$total=$row["hours"]*$row2["payrate"];
+	$total=$row["hours"]*$row2["payrate"]*1.04;
 	
 	return $total;
 }
@@ -165,15 +177,16 @@ function getweekstart($conn,$week){
 function getcurrentpayrollweek($conn){
 	$today=getcurrentdate();
 	$date = new DateTime($today);
-	$date->modify('-1 week');
+	//$date->modify('-1 week');
 	$lastweek=$date->format('Y-m-d');
 	
-	$sql="SELECT * FROM weeks WHERE Sdate<=$lastweek ORDER BY IDKey DESC LIMIT 1";
+	$sql="SELECT * FROM weeks WHERE Sdate<='$lastweek' ORDER BY IDKey DESC LIMIT 1";
 	$result = $conn->query($sql);
 	if ($result->num_rows > 0) {
 		$row = $result->fetch_assoc();
-		return $row["WeekID"];
+		return $row["IDKey"];
 	}
+	
 	return 0;
 }
 function getcurrentdate(){
