@@ -29,7 +29,7 @@ function printmenu($conn){
 			<input type='text' name='Mode' value='1' hidden>
 			<br><input type='radio' name='Task' value='1'>View Payroll
 			<br><input type='radio' name='Task' value='2'>Register hours #of hours:<input type='number' name='hours'> Day:<input type='date' name='day'>
-			<br><input type='radio' name='Task' value='3'>Modify Previous entries
+			<br><input type='radio' name='Task' value='3'>Modify Previous entries(offline)
 			<br>Employee:";
 	printAgentsList($conn);
 	echo "<br>Week:";
@@ -39,13 +39,14 @@ function printmenu($conn){
 	
 	echo "<form action='home.php' method='post'>HR related tasks:
 			<input type='text' name='Mode' value='2' hidden>
-			<br><input type='radio' name='Task' value='1'>View Current Employees Profiles
+			<br><input type='radio' name='Task' value='1'>View Current Employees Profiles(offline)
 			<br><input type='radio' name='Task' value='2'>Add a new Employee FN:<input type='text' name='FN'>
 			LN:<input type='text' name='LN'> SIN:<input type='text' name='SIN'> Pnum:<input type='text' name='Pnum'>
-			<br><input type='radio' name='Task' value='3'>Modify/Terminate an Employee
-			<br><input type='radio' name='Task' value='4'>Upload a Drivers License or other file
+			<br><input type='radio' name='Task' value='3'>Modify/Terminate an Employee(offline)
+			<br><input type='radio' name='Task' value='4'>Upload a Drivers License or other file(offline)
 			<br>Employee:";
 	printAgentsList($conn);
+	echo "Payrate:<input type='number' value='0' name='Pay'>";
 	echo"<br><input type='submit' value='Submit'>
 			</form>";
 	//Begin payroll printing
@@ -203,7 +204,12 @@ function getweekfromday($day,$conn){
 	$row = $result->fetch_assoc();
 	return $row["IDKey"];
 }
-
+function registeremployee($fn,$ln,$sin,$pnum,$pay,$conn){
+	$day=getcurrentdate();
+	$sql="INSERT INTO workers () VALUES ()";
+	$conn->query($sql);
+	echo "new employee has been registered";
+}
 
 
 

@@ -33,7 +33,11 @@ if( isset($_POST['Mode']) ){
 		if($Task==1){//View Employee profiles
 			
 		}else if($Task==2){//Add a new employee
-			
+			$fn=$_POST["FN"];
+			$ln=$_POST["LN"];
+			$sin=$_POST["SIN"];
+			$pnum=$_POST["Pnum"];
+			$payrate=$_POST["Pay"];
 		}else if($Task==3){//Modify an employee
 			
 		}else if($Task==4){//Upload an image and attach to employee
