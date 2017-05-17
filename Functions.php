@@ -51,12 +51,9 @@ function printmenu($conn){
 			</form>";
 	//Begin payroll printing
 	$week=getcurrentpayrollweek($conn);
-	
 	echo "Current Payroll Information!<table>";
 	printpayrollbyweek($week,$conn);
-			
 	echo "</table>";
-			
 }
 function getAgentList($conn){
 	$sql="SELECT Fname,Lname,IDKey FROM workers";
@@ -104,7 +101,6 @@ function printpayrollbyweek($week,$conn){
 			calculateDeductions($week,$agent,$conn);
 		}
 	}
-	
 }
 function calculateDeductions($week,$agent,$conn){
 	$weekstart=round(getweekearned($agent,$week,$conn),2);
@@ -132,10 +128,8 @@ function calculateCPP($weekstart){
 	return $cpp;
 }
 function calculateEI($weekstart){
-	$EI=$weekstart*0.0188;
-	
+	$EI=$weekstart*0.0163;
 	return $EI;
-	
 }
 function calculateprov($weekstart){
 	if($weekstart>0){
@@ -163,10 +157,8 @@ function getweekearned($agent,$week,$conn){
 	$row = $result->fetch_assoc();
 	$result2 = $conn->query($sql2);
 	$row2 = $result2->fetch_assoc();
-	
 	//Calculate the totals
 	$total=$row["hours"]*$row2["payrate"]*1.04;
-	
 	return $total;
 }
 function getweekstart($conn,$week){
@@ -187,12 +179,10 @@ function getcurrentpayrollweek($conn){
 		$row = $result->fetch_assoc();
 		return $row["IDKey"];
 	}
-	
 	return 0;
 }
 function getcurrentdate(){
 	$today = date("Y-m-d");
-	
 	return $today;
 }
 function addemployee(){
